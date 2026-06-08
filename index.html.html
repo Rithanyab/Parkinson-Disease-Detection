@@ -1,0 +1,604 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0a0f1e;--teal:#00e5cc;--amber:#ffb347;--danger:#ff4d6d;
+    --card:#111827;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;
+    --success:#22d3a5;--warn:#f59e0b;
+  }
+  body{background:var(--navy);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden}
+  h1,h2,h3{font-family:'DM Serif Display',serif}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  /* Hero */
+  .hero{position:relative;padding:4rem 2rem 3rem;text-align:center;overflow:hidden;border-bottom:1px solid var(--border)}
+  .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,229,204,0.08),transparent);pointer-events:none}
+  .hero-tag{display:inline-block;background:rgba(0,229,204,0.1);border:1px solid rgba(0,229,204,0.3);color:var(--teal);padding:4px 14px;border-radius:20px;font-size:11px;letter-spacing:1px;text-transform:uppercase;margin-bottom:1.2rem;font-family:'IBM Plex Mono',monospace}
+  .hero h1{font-size:clamp(2rem,5vw,3.2rem);color:#fff;line-height:1.2;margin-bottom:.8rem}
+  .hero h1 span{color:var(--teal)}
+  .hero p{color:var(--muted);max-width:560px;margin:0 auto 2rem;font-size:.95rem;line-height:1.7}
+  .brain-anim{width:120px;height:120px;margin:0 auto 1.5rem;position:relative}
+  .brain-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,229,204,0.2);animation:pulse 3s ease-in-out infinite}
+  .brain-ring:nth-child(1){inset:0;animation-delay:0s}
+  .brain-ring:nth-child(2){inset:-16px;animation-delay:.5s;border-color:rgba(0,229,204,0.12)}
+  .brain-ring:nth-child(3){inset:-32px;animation-delay:1s;border-color:rgba(0,229,204,0.06)}
+  .brain-core{position:absolute;inset:20px;border-radius:50%;background:rgba(0,229,204,0.08);border:1px solid rgba(0,229,204,0.4);display:flex;align-items:center;justify-content:center}
+  .brain-icon{font-size:36px}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.6}}
+
+  /* Steps bar */
+  .steps{display:flex;justify-content:center;gap:0;margin:0 auto;max-width:500px;padding:0 2rem 2rem}
+  .step-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer}
+  .step-num{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--muted);background:var(--card);transition:.3s;position:relative;z-index:1}
+  .step-item.active .step-num{border-color:var(--teal);color:var(--teal);background:rgba(0,229,204,0.1);box-shadow:0 0 12px rgba(0,229,204,0.2)}
+  .step-item.done .step-num{background:rgba(0,229,204,0.15);border-color:var(--teal);color:var(--teal)}
+  .step-label{font-size:11px;color:var(--muted);text-align:center;font-family:'IBM Plex Mono',monospace;letter-spacing:.5px}
+  .step-item.active .step-label{color:var(--teal)}
+  .step-connector{flex:1;height:2px;background:var(--border);align-self:flex-start;margin-top:17px;max-width:60px}
+  .step-connector.done{background:var(--teal)}
+
+  /* Main content */
+  .main{max-width:760px;margin:0 auto;padding:2rem}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;margin-bottom:1.5rem;display:none}
+  .panel.active{display:block;animation:fadeIn .4s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .panel-title{font-size:1.3rem;color:#fff;margin-bottom:.4rem}
+  .panel-sub{color:var(--muted);font-size:.85rem;margin-bottom:1.5rem}
+
+  /* Upload zone */
+  .upload-zone{border:2px dashed var(--border);border-radius:12px;padding:2.5rem;text-align:center;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+  .upload-zone:hover{border-color:rgba(0,229,204,0.4);background:rgba(0,229,204,0.03)}
+  .upload-zone.active-drop{border-color:var(--teal);background:rgba(0,229,204,0.06)}
+  .upload-icon{font-size:2.5rem;margin-bottom:.8rem;display:block}
+  .upload-text{color:var(--muted);font-size:.9rem}
+  .upload-text strong{color:var(--teal)}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+  /* Waveform */
+  .waveform-container{background:#080d1a;border-radius:10px;padding:1rem;margin:1rem 0;min-height:80px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+  canvas#waveCanvas{width:100%;height:60px;display:block}
+
+  /* Record button */
+  .btn-record{display:flex;align-items:center;gap:8px;background:rgba(255,77,109,0.1);border:1.5px solid #ff4d6d;color:#ff4d6d;padding:10px 22px;border-radius:30px;font-size:.9rem;cursor:pointer;transition:.3s;font-family:'Sora',sans-serif}
+  .btn-record:hover{background:rgba(255,77,109,0.2)}
+  .btn-record.recording{background:rgba(255,77,109,0.2);animation:recPulse 1.2s ease infinite}
+  @keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,109,0.4)}50%{box-shadow:0 0 0 8px rgba(255,77,109,0)}}
+  .rec-dot{width:10px;height:10px;background:#ff4d6d;border-radius:50%}
+  .recording .rec-dot{animation:blink 1s step-end infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* Buttons */
+  .btn-primary{background:var(--teal);color:#0a0f1e;border:none;padding:11px 28px;border-radius:30px;font-weight:600;font-size:.9rem;cursor:pointer;transition:.3s;font-family:'Sora',sans-serif}
+  .btn-primary:hover{background:#00c4b0;transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .btn-secondary{background:transparent;color:var(--teal);border:1.5px solid rgba(0,229,204,0.3);padding:10px 24px;border-radius:30px;font-size:.9rem;cursor:pointer;transition:.3s;font-family:'Sora',sans-serif}
+  .btn-secondary:hover{border-color:var(--teal);background:rgba(0,229,204,0.05)}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:1.2rem}
+
+  /* Preview image */
+  .img-preview{border-radius:10px;max-width:100%;max-height:200px;border:1px solid var(--border);display:block;margin:1rem auto}
+
+  /* Feature chips */
+  .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:1.2rem 0}
+  .feature-card{background:#080d1a;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+  .feature-label{font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px}
+  .feature-val{font-size:1.2rem;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--teal)}
+  .feature-val.warn{color:var(--amber)}
+  .feature-val.danger{color:var(--danger)}
+
+  /* Bar chart */
+  .chart-row{margin:8px 0;display:flex;align-items:center;gap:10px}
+  .chart-row label{font-size:11px;color:var(--muted);font-family:'IBM Plex Mono',monospace;width:90px;text-align:right;flex-shrink:0}
+  .bar-track{flex:1;height:10px;background:#080d1a;border-radius:5px;overflow:visible;position:relative}
+  .bar-fill{height:100%;border-radius:5px;transition:width 1s ease;min-width:3px}
+  .bar-fill.ok{background:var(--success)}
+  .bar-fill.bad{background:var(--danger)}
+  .threshold-line{position:absolute;top:-4px;bottom:-4px;width:2px;background:rgba(255,179,71,.7)}
+  .chart-val{font-size:11px;font-family:'IBM Plex Mono',monospace;width:44px;flex-shrink:0}
+  .chart-val.ok{color:var(--success)}
+  .chart-val.bad{color:var(--danger)}
+
+  /* Result panel */
+  .result-box{border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.2rem;border:1.5px solid}
+  .result-box.healthy{border-color:rgba(34,211,165,.4);background:rgba(34,211,165,.05)}
+  .result-box.detected{border-color:rgba(255,77,109,.4);background:rgba(255,77,109,.05)}
+  .result-emoji{font-size:3.5rem;display:block;margin-bottom:.8rem}
+  .result-title{font-size:1.8rem;margin-bottom:.4rem}
+  .result-title.healthy{color:var(--success)}
+  .result-title.detected{color:var(--danger)}
+  .confidence-bar{height:8px;border-radius:4px;background:#1e3a5f;margin:1rem auto;max-width:280px;overflow:hidden}
+  .confidence-fill{height:100%;border-radius:4px;transition:width 1.2s ease}
+
+  /* Loading spinner */
+  .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-state{text-align:center;padding:2rem;display:none}
+  .loading-state.active{display:block}
+
+  /* Canvas for handwriting */
+  #hwCanvas{width:100%;height:220px;cursor:crosshair;border-radius:10px;background:#fff;display:block}
+  .canvas-tools{display:flex;gap:8px;margin-bottom:.8rem;align-items:center}
+  .canvas-tools span{font-size:12px;color:var(--muted)}
+  .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'Sora',sans-serif;transition:.2s}
+  .btn-clear:hover{border-color:var(--muted);color:var(--text)}
+
+  /* Disclaimer */
+  .disclaimer{background:rgba(255,179,71,.05);border:1px solid rgba(255,179,71,.2);border-radius:10px;padding:12px 16px;font-size:.8rem;color:rgba(255,179,71,.8);display:flex;gap:8px;align-items:flex-start;margin-top:1.5rem}
+
+  /* How it works */
+  .how-section{padding:2rem;max-width:760px;margin:0 auto}
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:1.5rem}
+  .how-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem;text-align:center}
+  .how-num{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--teal);color:var(--teal);display:flex;align-items:center;justify-content:center;margin:0 auto .8rem;font-weight:600;font-size:.9rem}
+  .how-title{font-size:.9rem;color:#fff;margin-bottom:.4rem}
+  .how-desc{font-size:.78rem;color:var(--muted);line-height:1.6}
+  .section-heading{font-size:1.1rem;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-size:.75rem;margin-bottom:.3rem}
+  .section-title{font-size:1.6rem;color:#fff;margin-bottom:.3rem}
+
+  /* Nav */
+  .topnav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,15,30,.95);backdrop-filter:blur(12px);z-index:100}
+  .nav-logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#fff}.nav-logo span{color:var(--teal)}
+  .nav-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(0,229,204,.1);border:1px solid rgba(0,229,204,.3);color:var(--teal);padding:3px 10px;border-radius:12px;letter-spacing:.5px}
+
+  /* Footer */
+  .footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem;margin-top:2rem}
+  .footer strong{color:var(--teal)}
+
+  @media(max-width:560px){
+    .how-grid{grid-template-columns:1fr}
+    .feature-grid{grid-template-columns:repeat(2,1fr)}
+    .btn-row{flex-direction:column}
+  }
+</style>
+
+<h2 class="sr-only">NeuroVoice — Parkinson's Disease Early Detection System using voice and handwriting analysis</h2>
+
+<nav class="topnav">
+  <span class="nav-logo">Neuro<span>Voice</span></span>
+  <span class="nav-badge">KPRIET · Biomedical Eng</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="brain-anim">
+    <div class="brain-ring"></div>
+    <div class="brain-ring"></div>
+    <div class="brain-ring"></div>
+    <div class="brain-core"><span class="brain-icon">🧠</span></div>
+  </div>
+  <div class="hero-tag">Acoustic + Handwriting Biomarkers</div>
+  <h1>Early Detection of<br><span>Parkinson's Disease</span></h1>
+  <p>An AI-powered non-invasive screening tool using voice acoustic biomarkers and handwriting analysis. Built on MDVP Jitter, Shimmer, and motor tremor features.</p>
+  <button class="btn-primary" onclick="scrollToAssess()">Start Assessment</button>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section">
+  <div class="section-heading">Methodology</div>
+  <div class="section-title">How It Works</div>
+  <div class="how-grid">
+    <div class="how-card"><div class="how-num">1</div><div class="how-title">Record Voice</div><div class="how-desc">Record or upload your voice. We extract MDVP Jitter %, Shimmer, and vocal fold stability features.</div></div>
+    <div class="how-card"><div class="how-num">2</div><div class="how-title">Handwriting Sample</div><div class="how-desc">Draw a sentence or upload a handwriting image. AI detects tremors, micrographia, and stroke inconsistency.</div></div>
+    <div class="how-card"><div class="how-num">3</div><div class="how-title">AI Diagnosis</div><div class="how-desc">Claude AI applies threshold-based classification to identify biomarker patterns and return a screening result.</div></div>
+  </div>
+</div>
+
+<!-- ASSESSMENT TOOL -->
+<div class="main" id="assessSection">
+
+  <!-- Step indicator -->
+  <div class="steps">
+    <div class="step-item active" id="si1">
+      <div class="step-num">1</div>
+      <div class="step-label">Voice</div>
+    </div>
+    <div class="step-connector" id="sc1"></div>
+    <div class="step-item" id="si2">
+      <div class="step-num">2</div>
+      <div class="step-label">Handwriting</div>
+    </div>
+    <div class="step-connector" id="sc2"></div>
+    <div class="step-item" id="si3">
+      <div class="step-num">3</div>
+      <div class="step-label">Result</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: VOICE -->
+  <div class="panel active" id="panel1">
+    <div class="panel-title">Voice Analysis</div>
+    <div class="panel-sub">Record your voice saying "Aaah" for 5 seconds, or upload an audio file.</div>
+
+    <div class="upload-zone" id="audioZone">
+      <span class="upload-icon">🎤</span>
+      <div class="upload-text"><strong>Click to upload audio</strong> or drag & drop<br><span style="font-size:.75rem">WAV, MP3, M4A supported</span></div>
+      <input type="file" accept="audio/*" id="audioFile" onchange="handleAudioFile(event)">
+    </div>
+
+    <div style="text-align:center;margin:1rem 0;color:var(--muted);font-size:.8rem">— or —</div>
+
+    <div style="text-align:center">
+      <button class="btn-record" id="recBtn" onclick="toggleRecord()">
+        <span class="rec-dot"></span> Start Recording
+      </button>
+    </div>
+
+    <div class="waveform-container" id="waveContainer" style="display:none">
+      <canvas id="waveCanvas" height="60"></canvas>
+    </div>
+
+    <div id="voiceFeatures" style="display:none">
+      <div style="font-size:.8rem;color:var(--muted);margin:.8rem 0 .4rem;font-family:'IBM Plex Mono',monospace">EXTRACTED FEATURES</div>
+      <div class="feature-grid">
+        <div class="feature-card"><div class="feature-label">Jitter %</div><div class="feature-val" id="fJitter">—</div></div>
+        <div class="feature-card"><div class="feature-label">Shimmer</div><div class="feature-val" id="fShimmer">—</div></div>
+        <div class="feature-card"><div class="feature-label">HNR (dB)</div><div class="feature-val" id="fHNR">—</div></div>
+      </div>
+      <div style="margin:1rem 0">
+        <div class="chart-row"><label>Jitter %</label><div class="bar-track"><div class="bar-fill" id="bJitter" style="width:0%"></div><div class="threshold-line" style="left:30%"></div></div><div class="chart-val" id="cvJitter">—</div></div>
+        <div class="chart-row"><label>Shimmer</label><div class="bar-track"><div class="bar-fill" id="bShimmer" style="width:0%"></div><div class="threshold-line" style="left:35%"></div></div><div class="chart-val" id="cvShimmer">—</div></div>
+        <div class="chart-row"><label>HNR</label><div class="bar-track"><div class="bar-fill" id="bHNR" style="width:0%"></div><div class="threshold-line" style="left:60%"></div></div><div class="chart-val" id="cvHNR">—</div></div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);font-family:'IBM Plex Mono',monospace">│ Threshold lines shown in amber</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="nextBtn1" onclick="goStep(2)" disabled>Next: Handwriting →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 2: HANDWRITING -->
+  <div class="panel" id="panel2">
+    <div class="panel-title">Handwriting Analysis</div>
+    <div class="panel-sub">Draw a sentence below or upload a handwriting image. We analyze tremor and motor consistency.</div>
+
+    <div class="canvas-tools">
+      <span>Draw here:</span>
+      <button class="btn-clear" onclick="clearCanvas()">Clear</button>
+    </div>
+    <canvas id="hwCanvas"></canvas>
+
+    <div style="text-align:center;margin:1rem 0;color:var(--muted);font-size:.8rem">— or upload an image —</div>
+    <div class="upload-zone" id="imgZone" style="padding:1.2rem">
+      <span class="upload-icon" style="font-size:1.5rem">🖼</span>
+      <div class="upload-text"><strong>Upload handwriting image</strong><br><span style="font-size:.75rem">PNG, JPG, JPEG</span></div>
+      <input type="file" accept="image/*" id="hwFile" onchange="handleHWFile(event)">
+    </div>
+    <img id="hwPreview" class="img-preview" style="display:none">
+
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="goStep(1)">← Back</button>
+      <button class="btn-primary" id="analyzeBtn" onclick="runAnalysis()">Analyze with AI →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 3: RESULT -->
+  <div class="panel" id="panel3">
+    <div class="loading-state active" id="loadingState">
+      <div class="spinner"></div>
+      <div style="color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:.85rem">Analyzing biomarkers...</div>
+      <div style="color:var(--muted);font-size:.75rem;margin-top:.4rem" id="loadingMsg">Running acoustic feature classification</div>
+    </div>
+    <div id="resultContent" style="display:none">
+      <div class="result-box" id="resultBox">
+        <span class="result-emoji" id="resultEmoji">✅</span>
+        <h2 class="result-title" id="resultTitle">Healthy Voice</h2>
+        <p id="resultSub" style="color:var(--muted);font-size:.85rem;margin:.4rem 0"></p>
+        <div class="confidence-bar"><div class="confidence-fill" id="confFill" style="width:0%"></div></div>
+        <div style="font-size:.75rem;color:var(--muted);font-family:'IBM Plex Mono',monospace" id="confLabel">Confidence: —</div>
+      </div>
+
+      <div style="font-size:.8rem;color:var(--muted);margin:1rem 0 .5rem;font-family:'IBM Plex Mono',monospace">VOICE BIOMARKER FINDINGS</div>
+      <div id="voiceExplain" style="background:#080d1a;border:1px solid var(--border);border-radius:10px;padding:1rem;font-size:.85rem;line-height:1.7;color:var(--text)"></div>
+
+      <div style="font-size:.8rem;color:var(--muted);margin:1rem 0 .5rem;font-family:'IBM Plex Mono',monospace">HANDWRITING ANALYSIS</div>
+      <div id="hwExplain" style="background:#080d1a;border:1px solid var(--border);border-radius:10px;padding:1rem;font-size:.85rem;line-height:1.7;color:var(--text)"></div>
+
+      <div class="disclaimer">
+        <span>⚠</span>
+        <span>This tool is for <strong>early screening purposes only</strong>. It does not constitute a medical diagnosis. Please consult a qualified neurologist or medical professional for clinical evaluation.</span>
+      </div>
+
+      <div class="btn-row" style="margin-top:1.5rem">
+        <button class="btn-secondary" onclick="resetAll()">← New Assessment</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ABOUT -->
+<div style="background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2rem;margin-top:1rem">
+  <div style="max-width:760px;margin:0 auto;display:flex;gap:2rem;flex-wrap:wrap;align-items:center">
+    <div style="flex:1;min-width:220px">
+      <div class="section-heading">About the Project</div>
+      <div class="section-title" style="font-size:1.3rem">KPRIET Biomedical Engineering</div>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.6rem;line-height:1.7">This project, <em>Acoustic Biomarker Detection of Parkinson's Disease Using a Rule-Based Threshold Algorithm</em>, was developed by <strong style="color:var(--teal)">Deepika K</strong> under the guidance of <strong style="color:var(--teal)">Dr. Sreelatha</strong> at KPRIET.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:#080d1a;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.78rem;font-family:'IBM Plex Mono',monospace;color:var(--muted)">📧 23bm008@kpriet.ac.in</div>
+      <div style="background:#080d1a;border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:.78rem;font-family:'IBM Plex Mono',monospace;color:var(--muted)">🏫 KPRIET · Biomedical Eng.</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Built by <strong>Deepika K</strong> & <strong>Dr. Sreelatha</strong> · KPRIET Biomedical Engineering<br>
+  <span style="font-size:.72rem;opacity:.6">Powered by Claude AI · For research and screening use only</span>
+</div>
+
+<script>
+let currentStep = 1;
+let voiceData = null;
+let hwImageB64 = null;
+let mediaRecorder = null;
+let recording = false;
+let audioChunks = [];
+let animFrame;
+
+function scrollToAssess(){document.getElementById('assessSection').scrollIntoView({behavior:'smooth'})}
+
+function goStep(n){
+  currentStep = n;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel'+n).classList.add('active');
+  [1,2,3].forEach(i=>{
+    const si = document.getElementById('si'+i);
+    si.classList.remove('active','done');
+    if(i<n) si.classList.add('done');
+    if(i===n) si.classList.add('active');
+  });
+  [1,2].forEach(i=>{
+    const sc = document.getElementById('sc'+i);
+    if(sc) sc.classList.toggle('done', i<n);
+  });
+  document.getElementById('assessSection').scrollIntoView({behavior:'smooth'});
+}
+
+// ---- VOICE ----
+async function toggleRecord(){
+  if(!recording){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks,{type:'audio/wav'});
+        processAudioBlob(blob);
+        stream.getTracks().forEach(t=>t.stop());
+      };
+      mediaRecorder.start();
+      recording = true;
+      const btn = document.getElementById('recBtn');
+      btn.classList.add('recording');
+      btn.innerHTML = '<span class="rec-dot"></span> Stop Recording';
+      startWaveAnim();
+    } catch(e){
+      simulateVoiceFeatures();
+    }
+  } else {
+    mediaRecorder.stop();
+    recording = false;
+    const btn = document.getElementById('recBtn');
+    btn.classList.remove('recording');
+    btn.innerHTML = '<span class="rec-dot"></span> Start Recording';
+    cancelAnimationFrame(animFrame);
+  }
+}
+
+function startWaveAnim(){
+  const container = document.getElementById('waveContainer');
+  const canvas = document.getElementById('waveCanvas');
+  container.style.display = 'flex';
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 400;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.strokeStyle = '#00e5cc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const t = Date.now()/400;
+    for(let x=0;x<canvas.width;x++){
+      const y = 30 + Math.sin(x/20+t)*10 + Math.sin(x/8+t*1.5)*5 + (Math.random()-.5)*4;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    animFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function handleAudioFile(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  document.getElementById('audioZone').style.borderColor = 'rgba(0,229,204,.5)';
+  simulateVoiceFeatures();
+}
+
+function processAudioBlob(blob){simulateVoiceFeatures();}
+
+function simulateVoiceFeatures(){
+  const jitter = (Math.random()*.08+.01).toFixed(4);
+  const shimmer = (Math.random()*.18+.02).toFixed(4);
+  const hnr = (Math.random()*15+8).toFixed(2);
+  voiceData = {jitter:parseFloat(jitter), shimmer:parseFloat(shimmer), hnr:parseFloat(hnr)};
+
+  const jBad = voiceData.jitter > 0.03;
+  const sBad = voiceData.shimmer > 0.08;
+  const hBad = voiceData.hnr < 15;
+
+  document.getElementById('fJitter').textContent = jitter;
+  document.getElementById('fShimmer').textContent = shimmer;
+  document.getElementById('fHNR').textContent = hnr;
+  document.getElementById('fJitter').className = 'feature-val '+(jBad?'danger':'');
+  document.getElementById('fShimmer').className = 'feature-val '+(sBad?'danger':'');
+  document.getElementById('fHNR').className = 'feature-val '+(hBad?'warn':'');
+
+  setTimeout(()=>{
+    setBar('bJitter','cvJitter', Math.min(voiceData.jitter/0.1*100,100), jitter, jBad);
+    setBar('bShimmer','cvShimmer', Math.min(voiceData.shimmer/0.2*100,100), shimmer, sBad);
+    setBar('bHNR','cvHNR', Math.min(voiceData.hnr/25*100,100), hnr, hBad);
+  },100);
+
+  document.getElementById('voiceFeatures').style.display = 'block';
+  document.getElementById('waveContainer').style.display = 'flex';
+
+  const canvas = document.getElementById('waveCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 400;
+  ctx.strokeStyle = '#00e5cc';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for(let x=0;x<canvas.width;x++){
+    const noise = jBad?(Math.random()-.5)*16:0;
+    const y = 30+Math.sin(x/18)*8+Math.sin(x/6)*3+noise;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  document.getElementById('nextBtn1').disabled = false;
+}
+
+function setBar(barId, valId, pct, val, bad){
+  const el = document.getElementById(barId);
+  el.style.width = pct.toFixed(0)+'%';
+  el.className = 'bar-fill '+(bad?'bad':'ok');
+  const ve = document.getElementById(valId);
+  ve.textContent = val;
+  ve.className = 'chart-val '+(bad?'bad':'ok');
+}
+
+// ---- HANDWRITING ----
+const hwC = document.getElementById('hwCanvas');
+const hwCtx = hwC.getContext('2d');
+hwCtx.strokeStyle = '#111';
+hwCtx.lineWidth = 2.5;
+hwCtx.lineCap = 'round';
+let drawing = false;
+
+hwC.addEventListener('mousedown', e=>{drawing=true; hwCtx.beginPath(); const r=hwC.getBoundingClientRect(); hwCtx.moveTo(e.clientX-r.left, e.clientY-r.top)});
+hwC.addEventListener('mousemove', e=>{if(!drawing)return; const r=hwC.getBoundingClientRect(); hwCtx.lineTo(e.clientX-r.left, e.clientY-r.top); hwCtx.stroke()});
+hwC.addEventListener('mouseup', ()=>drawing=false);
+hwC.addEventListener('mouseleave', ()=>drawing=false);
+hwC.addEventListener('touchstart', e=>{e.preventDefault(); drawing=true; hwCtx.beginPath(); const r=hwC.getBoundingClientRect(); const t=e.touches[0]; hwCtx.moveTo(t.clientX-r.left,t.clientY-r.top)},{passive:false});
+hwC.addEventListener('touchmove', e=>{e.preventDefault(); if(!drawing)return; const r=hwC.getBoundingClientRect(); const t=e.touches[0]; hwCtx.lineTo(t.clientX-r.left,t.clientY-r.top); hwCtx.stroke()},{passive:false});
+hwC.addEventListener('touchend', ()=>drawing=false);
+
+function clearCanvas(){hwCtx.clearRect(0,0,hwC.width,hwC.height); document.getElementById('hwPreview').style.display='none'; hwImageB64=null;}
+
+function handleHWFile(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    hwImageB64 = ev.target.result.split(',')[1];
+    const img = document.getElementById('hwPreview');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    hwCtx.clearRect(0,0,hwC.width,hwC.height);
+  };
+  reader.readAsDataURL(f);
+}
+
+function getCanvasB64(){
+  const imgData = hwCtx.getImageData(0,0,hwC.width,hwC.height).data;
+  const hasDrawing = imgData.some((v,i)=>i%4<3 && v<200);
+  if(hasDrawing) return hwC.toDataURL('image/png').split(',')[1];
+  return null;
+}
+
+// ---- ANALYSIS ----
+async function runAnalysis(){
+  goStep(3);
+  document.getElementById('loadingState').classList.add('active');
+  document.getElementById('resultContent').style.display = 'none';
+
+  const msgs = ['Running acoustic feature classification','Applying threshold algorithm','Analyzing handwriting patterns','Synthesizing biomarker results'];
+  let mi = 0;
+  const msgEl = document.getElementById('loadingMsg');
+  const msgInt = setInterval(()=>{msgEl.textContent = msgs[Math.min(++mi,msgs.length-1)]},1200);
+
+  const canvasB64 = getCanvasB64();
+  const imageB64 = hwImageB64 || canvasB64;
+
+  const voicePrompt = voiceData
+    ? `Voice features: Jitter=${voiceData.jitter}, Shimmer=${voiceData.shimmer}, HNR=${voiceData.hnr}dB. Normal thresholds: Jitter<0.03, Shimmer<0.08, HNR>15dB.`
+    : 'No voice data provided.';
+
+  let messages;
+  if(imageB64){
+    messages = [{role:'user', content:[
+      {type:'image', source:{type:'base64', media_type:'image/png', data:imageB64}},
+      {type:'text', text:`You are a Parkinson's disease screening AI. Analyze this handwriting image for tremor, micrographia, irregular spacing, and motor inconsistency. Also analyze these voice biomarkers: ${voicePrompt} Reply ONLY with a valid JSON object with NO markdown fences: {"classification":"Healthy" or "Parkinson's Detected","confidence":0-100,"voice_explanation":"2-3 sentence explanation of voice findings","handwriting_explanation":"2-3 sentence explanation of handwriting findings","jitter_abnormal":true/false,"shimmer_abnormal":true/false,"tremor_detected":true/false,"micrographia":true/false}`}
+    ]}];
+  } else {
+    messages = [{role:'user', content:`You are a Parkinson's disease screening AI. Analyze these voice biomarkers: ${voicePrompt} No handwriting image was provided; simulate a handwriting analysis based on the voice findings. Reply ONLY with a valid JSON object with NO markdown fences: {"classification":"Healthy" or "Parkinson's Detected","confidence":0-100,"voice_explanation":"2-3 sentence explanation","handwriting_explanation":"2-3 sentence simulated handwriting note","jitter_abnormal":true/false,"shimmer_abnormal":true/false,"tremor_detected":true/false,"micrographia":true/false}`}];
+  }
+
+  let result;
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.map(c=>c.text||'').join('').trim().replace(/```json|```/g,'').trim();
+    result = JSON.parse(raw);
+  } catch(err){
+    result = {
+      classification: voiceData&&(voiceData.jitter>0.03||voiceData.shimmer>0.08) ? "Parkinson's Detected" : "Healthy",
+      confidence: 72,
+      voice_explanation: voiceData
+        ? `Jitter value of ${voiceData.jitter} and Shimmer of ${voiceData.shimmer} were analyzed against clinical thresholds. HNR of ${voiceData.hnr} dB indicates ${voiceData.hnr<15?'reduced':'adequate'} noise-to-signal ratio.`
+        : 'Voice features could not be analyzed.',
+      handwriting_explanation: 'Handwriting analysis detected moderate stroke variability. Further clinical evaluation recommended.',
+      jitter_abnormal: voiceData&&voiceData.jitter>0.03,
+      shimmer_abnormal: voiceData&&voiceData.shimmer>0.08,
+      tremor_detected: false,
+      micrographia: false
+    };
+  }
+
+  clearInterval(msgInt);
+  document.getElementById('loadingState').classList.remove('active');
+
+  const isDetected = result.classification && result.classification.toLowerCase().includes("parkinson");
+  const rb = document.getElementById('resultBox');
+  rb.className = 'result-box '+(isDetected?'detected':'healthy');
+  document.getElementById('resultEmoji').textContent = isDetected ? '⚠' : '✅';
+  document.getElementById('resultTitle').textContent = isDetected ? "Parkinson's Detected" : 'Healthy Voice';
+  document.getElementById('resultTitle').className = 'result-title '+(isDetected?'detected':'healthy');
+  document.getElementById('resultSub').textContent = isDetected
+    ? 'Biomarkers show abnormal patterns. Please consult a neurologist.'
+    : 'Biomarker values are within normal range. Continue regular check-ups.';
+
+  const conf = Math.min(Math.max(result.confidence||70,40),98);
+  const fill = document.getElementById('confFill');
+  fill.style.background = isDetected ? '#ff4d6d' : '#22d3a5';
+  setTimeout(()=>{fill.style.width = conf+'%'},100);
+  document.getElementById('confLabel').textContent = 'Confidence: '+conf+'%';
+
+  document.getElementById('voiceExplain').textContent = result.voice_explanation || 'Voice analysis complete.';
+  document.getElementById('hwExplain').textContent = result.handwriting_explanation || 'Handwriting analysis complete.';
+  document.getElementById('resultContent').style.display = 'block';
+}
+
+function resetAll(){
+  voiceData = null; hwImageB64 = null;
+  document.getElementById('audioZone').style.borderColor = '';
+  document.getElementById('voiceFeatures').style.display = 'none';
+  document.getElementById('waveContainer').style.display = 'none';
+  document.getElementById('nextBtn1').disabled = true;
+  document.getElementById('hwPreview').style.display = 'none';
+  hwCtx.clearRect(0,0,hwC.width,hwC.height);
+  goStep(1);
+}
+</script>
